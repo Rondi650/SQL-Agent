@@ -43,15 +43,15 @@ if "pending_question" not in st.session_state:
 avatar_human = None
 avatar_assistant = None
 
-if os.path.exists("avatar_human.png"):
+if os.path.exists("my_agent/utils/images/avatar_human.png"):
     try:
-        avatar_human = Image.open("avatar_human.png")
+        avatar_human = Image.open("my_agent/utils/images/avatar_human.png")
     except Exception as e:
         st.warning(f"Não foi possível carregar avatar_human.png: {e}")
 
-if os.path.exists("avatar_ia.png"):
+if os.path.exists("my_agent/utils/images/avatar_ia.png"):
     try:
-        avatar_assistant = Image.open("avatar_ia.png")
+        avatar_assistant = Image.open("my_agent/utils/images/avatar_ia.png")
     except Exception as e:
         st.warning(f"Não foi possível carregar avatar_ia.png: {e}")
 
