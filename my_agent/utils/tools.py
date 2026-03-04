@@ -1,122 +1,107 @@
 import sys
 from langchain.tools import tool, BaseTool
-from my_agent.config.database import db
-from langchain_community.agent_toolkits import SQLDatabaseToolkit
-from my_agent.config.settings import llm
-from .helpers import construir_clausula_where, formatar_resumo_filtros, safe_ident
+from my_agent.models.request import QueryParams
+from my_agent.config.database import run_db
 from typing import Literal
 
 sys.path.append("..")
-from my_agent.models.request import QueryParams
 
-toolkit = SQLDatabaseToolkit(db=db, llm=llm)
-SQL_TOOLS: list[BaseTool] = toolkit.get_tools()
-
-
-@tool("calcular_nps", description="Calcula o NPS (Net Promoter Score). Args: data_inicio (YYYY-MM-DD), data_fim (YYYY-MM-DD), agent (opcional, ex: 'Diane'), topic (opcional).")
-def calcular_nps(params: QueryParams) -> str:
-    """Calcula o NPS: (Promotores [4-5] - Detratores [1-2]) / Total * 100."""
-    where_clauses = [f"Date BETWEEN '{params.data_inicio}' AND '{params.data_fim}'", "[Answered_Y_N] = 1", "[Satisfaction_rating] IS NOT NULL"]
-    where_sql = construir_clausula_where(params.agent, params.topic, where_clauses)
-    query = f"""
-    SELECT ROUND(
-        (CAST(COUNT(CASE WHEN [Satisfaction_rating] >= 4 THEN 1 END) AS FLOAT) - 
-         CAST(COUNT(CASE WHEN [Satisfaction_rating] <= 2 THEN 1 END) AS FLOAT)) * 100.0 / 
-        NULLIF(COUNT(*), 0),
-        2
-    ) AS nps
-    FROM [01 Call-Center-Dataset]
-    WHERE {where_sql}
+@tool("aggregate_metric", description="Agrega uma métrica usando uma operação "
+"(AVG, SUM, MIN, MAX, COUNT) e opcionalmente agrupa por uma coluna.")
+def aggregate_metric(params: QueryParams):
     """
-    resultado = db.run(query)
-    filtros = formatar_resumo_filtros(params.data_inicio, params.data_fim, params.agent, params.topic)
-    return f"{filtros}\nNPS: {resultado}"
-
-@tool("calcular_tmo", description="Calcula o TMO (Tempo Médio Operacional) em HH:MM:SS. Args: data_inicio (YYYY-MM-DD), data_fim (YYYY-MM-DD), agent (opcional), topic (opcional).")
-def calcular_tmo(params: QueryParams) -> str:
-    """Calcula o TMO em formato 00:00:00."""
-    where_clauses = [f"Date BETWEEN '{params.data_inicio}' AND '{params.data_fim}'", "[Answered_Y_N] = 1", "[AvgTalkDuration] IS NOT NULL"]
-    where_sql = construir_clausula_where(params.agent, params.topic, where_clauses)
-    query = f"""
-    SELECT CONVERT(VARCHAR(8), DATEADD(SECOND, 
-        CAST(AVG(CAST(DATEDIFF(SECOND, '00:00:00', [AvgTalkDuration]) AS FLOAT)) AS INT), 
-        '00:00:00'), 108) AS tmo_formato
-    FROM [01 Call-Center-Dataset]
-    WHERE {where_sql}
+    Allowed operations: AVG, SUM, MIN, MAX, COUNT
     """
-    resultado = db.run(query)
-    filtros = formatar_resumo_filtros(params.data_inicio, params.data_fim, params.agent, params.topic)
-    return f"{filtros}\nTMO (HH:MM:SS): {resultado}"
+    if params.group_by:
+        query = f"""
+            SELECT {params.group_by}, {params.operation}({params.column})
+            FROM customers
+            GROUP BY {params.group_by}
+        """
+    else:
+        query = f"""
+            SELECT {params.operation}({params.column})
+            FROM customers
+        """
+    resultado = run_db(query)
+    return str(resultado)
 
-@tool("ligacoes_atendidas", description="Conta o total de ligações atendidas. Args: data_inicio (YYYY-MM-DD), data_fim (YYYY-MM-DD), agent (opcional), topic (opcional).")
-def ligacoes_atendidas(params: QueryParams) -> str:
-    """Retorna o total de ligações atendidas entre as datas."""
-    where_clauses = [f"Date BETWEEN '{params.data_inicio}' AND '{params.data_fim}'", "[Answered_Y_N] = 1"]
-    where_sql = construir_clausula_where(params.agent, params.topic, where_clauses)
-    query = f"""
-    SELECT COUNT(*) AS total_atendidas
-    FROM [01 Call-Center-Dataset]
-    WHERE {where_sql}
+@tool("filter_data", description="Filtra dados com base em " \
+"critérios especificados.")
+def filter_data(params: QueryParams):
     """
-    resultado = db.run(query)
-    filtros = formatar_resumo_filtros(params.data_inicio, params.data_fim, params.agent, params.topic)
-    return f"{filtros}\nTotal atendidas: {resultado}"
+    Allowed operators: >, <, =, >=, <=
+    """
+    query = f"""
+    SELECT *
+    FROM customers
+    WHERE {params.column} {params.operator} {params.value}
+    LIMIT {params.limit}
+    """
+    resultado = run_db(query)
+    return str(resultado)
 
-@tool("nps_por_agente", description="NPS agrupado por campo. Args: data_inicio, data_fim, topic (opcional), group_by ('Agent'|'Topic', padrão 'Agent').")
-def nps_por_agente(params: QueryParams, group_by: Literal["Agent", "Topic"] = "Agent") -> str:
-    group_col = safe_ident(group_by)
-    where_clauses = [f"Date BETWEEN '{params.data_inicio}' AND '{params.data_fim}'","[Answered_Y_N] = 1","[Satisfaction_rating] IS NOT NULL"]
-    where_sql = construir_clausula_where(params.agent, params.topic, where_clauses)
+@tool("top_students", description="Retorna os melhores estudantes " \
+"com base em uma métrica.")
+def top_students(params: QueryParams):
     query = f"""
-    SELECT {group_col} AS grupo,
-           ROUND(
-             (CAST(COUNT(CASE WHEN [Satisfaction_rating] >= 4 THEN 1 END) AS FLOAT) -
-              CAST(COUNT(CASE WHEN [Satisfaction_rating] <= 2 THEN 1 END) AS FLOAT)) * 100.0 /
-             NULLIF(COUNT(*), 0), 2
-           ) AS nps
-    FROM [01 Call-Center-Dataset]
-    WHERE {where_sql}
-    GROUP BY {group_col}
-    ORDER BY nps DESC
+    SELECT *
+    FROM customers
+    ORDER BY {params.column} DESC
+    LIMIT {params.limit}
     """
-    rows = db.run(query)
-    return f"NPS por {group_by} ({params.data_inicio} a {params.data_fim}): {rows}"
+    resultado = run_db(query)
+    return str(resultado)
 
-@tool("tmo_por_agente", description="TMO médio por campo. Args: data_inicio, data_fim, topic (opcional), group_by ('Agent'|'Topic', padrão 'Agent').")
-def tmo_por_agente(params: QueryParams, group_by: Literal["Agent", "Topic"] = "Agent") -> str:
-    group_col = safe_ident(group_by)
-    where_clauses = [f"Date BETWEEN '{params.data_inicio}' AND '{params.data_fim}'","[Answered_Y_N] = 1","[AvgTalkDuration] IS NOT NULL"]
-    where_sql = construir_clausula_where(params.agent, params.topic, where_clauses)
-    query = f"""
-    SELECT {group_col} AS grupo,
-           CONVERT(VARCHAR(8), DATEADD(SECOND,
-               CAST(AVG(CAST(DATEDIFF(SECOND, '00:00:00', [AvgTalkDuration]) AS FLOAT)) AS INT),
-               '00:00:00'), 108) AS tmo
-    FROM [01 Call-Center-Dataset]
-    WHERE {where_sql}
-    GROUP BY {group_col}
-    ORDER BY tmo ASC
+@tool("get_table_schema", description="Retorna o schema (estrutura) da tabela " \
+"customers com informações sobre cada coluna e seu tipo de dado.")
+def get_table_schema(params: QueryParams):
     """
-    rows = db.run(query)
-    return f"TMO por {group_by} ({params.data_inicio} a {params.data_fim}): {rows}"
-
-@tool("contatos_por_topico", description="Total de ligações agrupado. Args: data_inicio, data_fim, agent (opcional), group_by ('Topic'|'Agent', padrão 'Topic').")
-def contatos_por_topico(params: QueryParams, group_by: Literal["Topic", "Agent"] = "Topic") -> str:
-    group_col = safe_ident(group_by)
-    where_clauses = [f"Date BETWEEN '{params.data_inicio}' AND '{params.data_fim}'","[Answered_Y_N] = 1"]
-    where_sql = construir_clausula_where(params.agent, params.topic, where_clauses)
-    query = f"""
-    SELECT {group_col} AS grupo, COUNT(*) AS total
-    FROM [01 Call-Center-Dataset]
-    WHERE {where_sql}
-    GROUP BY {group_col}
-    ORDER BY total DESC
+    Returns the schema of the customers table with column names, types, and descriptions
     """
-    rows = db.run(query)
-    return f"Contatos por {group_by} ({params.data_inicio} a {params.data_fim}): {rows}"
+    schema_info = """
+    SCHEMA DA TABELA 'customers':
+    
+    📊 DADOS DEMOGRÁFICOS:
+    - student_id (INT): Identificador único do estudante
+    - age (INT): Idade do estudante
+    - gender (TEXT): Gênero (Male/Female)
+    - academic_level (TEXT): Nível acadêmico (High School/Undergraduate/Graduate)
+    
+    📚 HÁBITOS DE ESTUDO:
+    - study_hours (FLOAT): Horas de estudo por semana
+    - self_study_hours (FLOAT): Horas de auto-estudo por semana
+    - online_classes_hours (FLOAT): Horas em aulas online por semana
+    
+    📱 COMPORTAMENTO DIGITAL:
+    - social_media_hours (FLOAT): Horas em redes sociais por semana
+    - gaming_hours (FLOAT): Horas de jogos por semana
+    - screen_time_hours (FLOAT): Tempo total de tela por semana
+    
+    🏃 SAÚDE E ESTILO DE VIDA:
+    - sleep_hours (FLOAT): Horas de sono por noite
+    - exercise_minutes (INT): Minutos de exercício por semana
+    - caffeine_intake_mg (INT): Ingestão de cafeína em mg por dia
+    - mental_health_score (INT): Score de saúde mental (0-100)
+    
+    ⚖️ PRESSÃO PROFISSIONAL E ACADÊMICA:
+    - part_time_job (INT): 1 se tem trabalho part-time, 0 caso contrário
+    - upcoming_deadline (INT): 1 se há prazo próximo, 0 caso contrário
+    - internet_quality (TEXT): Qualidade da internet (Poor/Average/Good/Excellent)
+    
+    📈 VARIÁVEIS ALVO (Predição):
+    - focus_index (FLOAT): Índice de foco (0-100)
+    - burnout_level (FLOAT): Nível de burnout (0-100)
+    - productivity_score (FLOAT): Score de produtividade (0-100)
+    - exam_score (FLOAT): Pontuação no exame (0-100)
+    
+    TOTAL: 21 colunas, 5000 registros de estudantes
+    """
+    return schema_info
 
 CUSTOM_TOOLS: list[BaseTool] = [
-    ligacoes_atendidas, calcular_tmo, calcular_nps,
-    nps_por_agente, tmo_por_agente, contatos_por_topico
+    aggregate_metric,
+    filter_data,
+    top_students,
+    get_table_schema,
 ]
-ALL_TOOLS: list[BaseTool] = SQL_TOOLS + CUSTOM_TOOLS

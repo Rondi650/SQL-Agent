@@ -3,6 +3,8 @@ import requests
 import json
 from datetime import datetime
 from typing import Optional
+from PIL import Image
+import os
 
 # Page configuration
 st.set_page_config(
@@ -34,15 +36,33 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "thread_id" not in st.session_state:
     st.session_state.thread_id = None
+if "pending_question" not in st.session_state:
+    st.session_state.pending_question = None
+
+# Load avatars
+avatar_human = None
+avatar_assistant = None
+
+if os.path.exists("avatar_human.png"):
+    try:
+        avatar_human = Image.open("avatar_human.png")
+    except Exception as e:
+        st.warning(f"Não foi possível carregar avatar_human.png: {e}")
+
+if os.path.exists("avatar_ia.png"):
+    try:
+        avatar_assistant = Image.open("avatar_ia.png")
+    except Exception as e:
+        st.warning(f"Não foi possível carregar avatar_ia.png: {e}")
 
 # Header
-st.title("🤖 SQL Agent Chat")
+st.title("SQL Agent Chat")
 st.markdown(
     "Faça perguntas sobre seus dados e o agente irá responder usando SQL ou ferramentas calculadas.")
 
 # Sidebar with info
 with st.sidebar:
-    st.header("⚙️ Configurações")
+    st.header("Configurações")
 
     api_url = st.text_input(
         "URL da API",
@@ -55,42 +75,69 @@ with st.sidebar:
         API_ENDPOINT = f"{api_url}/chat"
 
     st.markdown("---")
-    st.subheader("📊 Informações da Sessão")
+    st.subheader("Informações da Sessão")
 
     if st.session_state.thread_id:
         st.info(f"**Thread ID:** `{st.session_state.thread_id}`")
     else:
-        st.warning("Nenhuma conversa iniciada ainda")
+        st.info("Nenhuma conversa iniciada ainda")
 
     st.markdown("---")
-    st.subheader("💡 Exemplos de Perguntas")
-
-    examples = [
-        "Qual é o NPS geral?",
-        "Qual o NPS de janeiro de 2025?",
-        "Qual agente atendeu mais chamadas?",
-        "Qual é o TMO médio?",
-        "Quantas chamadas foram atendidas em janeiro?"
-    ]
-
-    for i, example in enumerate(examples, 1):
-        if st.button(f"📋 {example}", key=f"example_{i}"):
-            st.session_state.query = example
+    st.subheader("Exemplos de Perguntas")
+    
+    # Categorize examples
+    examples_by_category = {
+        "Desempenho": [
+            "Qual é a nota média de exame dos estudantes?",
+            "Qual é o score de produtividade máximo?",
+            "Qual é o nível médio de burnout?"
+        ],
+        "Top Estudantes": [
+            "Quais são os 10 melhores estudantes por nota?",
+            "Quem são os 5 estudantes mais produtivos?",
+            "Quais têm o menor burnout?"
+        ],
+        "Hábitos de Estudo": [
+            "Qual é a média de horas de estudo?",
+            "Quanto tempo em redes sociais em média?",
+            "Qual o tempo total de tela médio?"
+        ],
+        "Saúde e Bem-estar": [
+            "Qual é o score médio de saúde mental?",
+            "Quantos minutos de exercício em média?",
+            "Qual é a ingestão média de cafeína?"
+        ],
+        "Análises Demográficas": [
+            "Qual a nota média por nível acadêmico?",
+            "Qual o burnout médio por gênero?",
+            "Produtividade dos alunos de trabalho part-time?"
+        ]
+    }
+    
+    counter = 0
+    for category, questions in examples_by_category.items():
+        with st.expander(category, expanded=False):
+            for question in questions:
+                counter += 1
+                if st.button(question, key=f"example_{counter}", use_container_width=True):
+                    st.session_state.pending_question = question
+                    st.rerun()
 
     st.markdown("---")
-    st.subheader("🔗 Links Úteis")
-    st.markdown(f"[📖 Documentação Swagger]({api_url}/docs)")
-    st.markdown(f"[📚 Documentação ReDoc]({api_url}/redoc)")
+    st.subheader("Links Úteis")
+    st.markdown(f"[Documentação Swagger]({api_url}/docs)")
+    st.markdown(f"[Documentação ReDoc]({api_url}/redoc)")
 
 # Main chat area
-st.subheader("💬 Conversa")
+st.subheader("Conversa")
 
 # Display chat history
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
+    avatar = avatar_human if message["role"] == "user" else avatar_assistant
+    with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
         if "metadata" in message:
-            with st.expander("📌 Detalhes"):
+            with st.expander("Detalhes"):
                 col1, col2 = st.columns(2)
                 with col1:
                     st.caption(f"**Data/Hora:** {message['metadata']['data_hora']}")
@@ -100,6 +147,11 @@ for message in st.session_state.messages:
 # Chat input
 user_input = st.chat_input("Digite sua pergunta aqui...", key="chat_input")
 
+# Use pending question if available (from example buttons)
+if st.session_state.pending_question:
+    user_input = st.session_state.pending_question
+    st.session_state.pending_question = None
+
 if user_input:
     # Add user message to history
     st.session_state.messages.append({
@@ -108,17 +160,17 @@ if user_input:
     })
 
     # Display user message
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar=avatar_human):
         st.markdown(user_input)
 
     # Make API request
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar=avatar_assistant):
         with st.spinner("Processando sua pergunta..."):
             try:
                 response = requests.post(
                     API_ENDPOINT,
                     json={"pergunta": user_input},
-                    timeout=30
+                    timeout=60
                 )
 
                 if response.status_code == 200:
@@ -135,7 +187,7 @@ if user_input:
                     st.markdown(assistant_message)
 
                     # Show metadata
-                    with st.expander("📌 Detalhes"):
+                    with st.expander("Detalhes"):
                         col1, col2 = st.columns(2)
                         with col1:
                             st.caption(f"**Data/Hora:** {data_hora}")
@@ -152,7 +204,7 @@ if user_input:
                         }
                     })
                 else:
-                    error_msg = f"❌ Erro da API (Status {response.status_code})"
+                    error_msg = f"Erro da API (Status {response.status_code})"
                     st.error(error_msg)
                     st.session_state.messages.append({
                         "role": "assistant",
@@ -160,21 +212,21 @@ if user_input:
                     })
 
             except requests.exceptions.ConnectionError:
-                error_msg = "❌ Erro: Não foi possível conectar à API. Verifique se a aplicação está rodando em http://localhost:8000"
+                error_msg = "Erro: Não foi possível conectar à API. Verifique se a aplicação está rodando em http://localhost:8000"
                 st.error(error_msg)
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": error_msg
                 })
             except requests.exceptions.Timeout:
-                error_msg = "⏱️ Erro: Requisição expirou. Tente novamente."
+                error_msg = "Erro: Requisição expirou. Tente novamente."
                 st.error(error_msg)
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": error_msg
                 })
             except Exception as e:
-                error_msg = f"❌ Erro inesperado: {str(e)}"
+                error_msg = f"Erro inesperado: {str(e)}"
                 st.error(error_msg)
                 st.session_state.messages.append({
                     "role": "assistant",
@@ -185,7 +237,7 @@ if user_input:
 if st.session_state.messages:
     col1, col2 = st.columns([1, 4])
     with col1:
-        if st.button("🗑️ Limpar Chat", use_container_width=True):
+        if st.button("Limpar Chat", use_container_width=True):
             st.session_state.messages = []
             st.session_state.thread_id = None
             st.rerun()

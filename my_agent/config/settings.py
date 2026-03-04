@@ -17,4 +17,17 @@ LLM_TEMPERATURE = 0
 
 api_key = SecretStr(os.getenv("OPENAI_API_KEY") or "")
 
-llm = ChatOpenAI(api_key=api_key, model=LLM_MODEL, temperature=LLM_TEMPERATURE)
+llm = ChatOpenAI(
+    api_key=api_key,
+    model=LLM_MODEL,
+    temperature=LLM_TEMPERATURE
+)
+
+# messages = [
+#     (
+#         "system",
+#         "You are a helpful translator. Translate the user sentence to French.",
+#     ),
+#     ("human", "I love programming."),
+# ]
+# print(llm.invoke(messages))
