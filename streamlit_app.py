@@ -128,9 +128,6 @@ with st.sidebar:
     st.markdown(f"[Documentação Swagger]({api_url}/docs)")
     st.markdown(f"[Documentação ReDoc]({api_url}/redoc)")
 
-# Main chat area
-st.subheader("Conversa")
-
 # Display chat history
 for message in st.session_state.messages:
     avatar = avatar_human if message["role"] == "user" else avatar_assistant
@@ -138,11 +135,14 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
         if "metadata" in message:
             with st.expander("Detalhes"):
-                col1, col2 = st.columns(2)
+                col1, col2, col3 = st.columns(3)
                 with col1:
-                    st.caption(f"**Data/Hora:** {message['metadata']['data_hora']}")
+                    st.caption(f"**Data/Hora:** {message['metadata'].get('data_hora', 'N/A')}")
                 with col2:
-                    st.caption(f"**Thread:** `{message['metadata']['thread_id']}`")
+                    st.caption(f"**Thread:** `{message['metadata'].get('thread_id', 'N/A')}`")
+                with col3:
+                    tokens = message['metadata'].get('total_tokens', 0)
+                    st.caption(f"**Tokens Usados:** {tokens}")
 
 # Chat input
 user_input = st.chat_input("Digite sua pergunta aqui...", key="chat_input")
@@ -179,6 +179,7 @@ if user_input:
                         "response", "Erro ao processar resposta")
                     thread_id = data.get("thread_id", "desconhecido")
                     data_hora = data.get("data_hora", datetime.utcnow().isoformat())
+                    total_tokens = data.get("total_tokens", 0)
 
                     # Update thread ID
                     st.session_state.thread_id = thread_id
@@ -188,11 +189,13 @@ if user_input:
 
                     # Show metadata
                     with st.expander("Detalhes"):
-                        col1, col2 = st.columns(2)
+                        col1, col2, col3 = st.columns(3)
                         with col1:
                             st.caption(f"**Data/Hora:** {data_hora}")
                         with col2:
                             st.caption(f"**Thread:** `{thread_id}`")
+                        with col3:
+                            st.caption(f"**Tokens Usados:** {total_tokens}")
 
                     # Add to history
                     st.session_state.messages.append({
@@ -200,7 +203,8 @@ if user_input:
                         "content": assistant_message,
                         "metadata": {
                             "data_hora": data_hora,
-                            "thread_id": thread_id
+                            "thread_id": thread_id,
+                            "total_tokens": total_tokens
                         }
                     })
                 else:

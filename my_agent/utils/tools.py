@@ -2,7 +2,6 @@ import sys
 from langchain.tools import tool, BaseTool
 from my_agent.models.request import QueryParams
 from my_agent.config.database import run_db
-from typing import Literal
 
 sys.path.append("..")
 

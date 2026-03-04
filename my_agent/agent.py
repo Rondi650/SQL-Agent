@@ -1,6 +1,7 @@
 from langgraph.graph import StateGraph, START, MessagesState
 from langgraph.prebuilt import ToolNode
 from langgraph.checkpoint.memory import InMemorySaver
+from pathlib import Path
 from .utils import (
     CUSTOM_TOOLS,
     roteador,
@@ -28,3 +29,11 @@ def create_agent():
 
 # Criar instância do agente
 agent = create_agent()
+
+# Show workflow
+CAMINHO = Path(__file__).parent
+
+png_bytes = agent.get_graph().draw_mermaid_png()
+
+with open(CAMINHO / "agent_workflow.png", "wb") as f:
+    f.write(png_bytes)
