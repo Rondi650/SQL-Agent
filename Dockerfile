@@ -12,5 +12,12 @@ COPY . .
 EXPOSE 8081
 EXPOSE 8501
 
-RUN chmod 755 ./scripts/entrypoint.sh
+RUN adduser --disabled-password rondi && \
+    usermod -aG sudo rondi && \
+    echo "rondi ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    chmod 755 ./scripts/entrypoint.sh && \
+    chown -R rondi:rondi /app
+
+USER rondi
+
 CMD ["./scripts/entrypoint.sh"]

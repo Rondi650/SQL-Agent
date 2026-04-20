@@ -84,7 +84,7 @@ with st.sidebar:
 
     st.markdown("---")
     st.subheader("Exemplos de Perguntas")
-    
+
     # Categorize examples
     examples_by_category = {
         "Desempenho": [
@@ -113,7 +113,7 @@ with st.sidebar:
             "Produtividade dos alunos de trabalho part-time?"
         ]
     }
-    
+
     counter = 0
     for category, questions in examples_by_category.items():
         with st.expander(category, expanded=False):
@@ -137,9 +137,11 @@ for message in st.session_state.messages:
             with st.expander("Detalhes"):
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    st.caption(f"**Data/Hora:** {message['metadata'].get('data_hora', 'N/A')}")
+                    st.caption(
+                        f"**Data/Hora:** {message['metadata'].get('data_hora', 'N/A')}")
                 with col2:
-                    st.caption(f"**Thread:** `{message['metadata'].get('thread_id', 'N/A')}`")
+                    st.caption(
+                        f"**Thread:** `{message['metadata'].get('thread_id', 'N/A')}`")
                 with col3:
                     tokens = message['metadata'].get('total_tokens', 0)
                     st.caption(f"**Tokens Usados:** {tokens}")
@@ -178,7 +180,8 @@ if user_input:
                     assistant_message = data.get(
                         "response", "Erro ao processar resposta")
                     thread_id = data.get("thread_id", "desconhecido")
-                    data_hora = data.get("data_hora", datetime.utcnow().isoformat())
+                    data_hora = data.get(
+                        "data_hora", datetime.utcnow().isoformat())
                     total_tokens = data.get("total_tokens", 0)
 
                     # Update thread ID
