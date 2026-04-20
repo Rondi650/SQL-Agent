@@ -1,0 +1,12 @@
+services:
+  sql_agent:
+    build: .
+    container_name: sql_agent
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
