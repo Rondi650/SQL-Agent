@@ -4,9 +4,7 @@ import sqlite3
 from pathlib import Path
 import pandas as pd
 
-PATH_CSV='/home/rondi/python_projects/' \
-'PROJETO-4---SQL_AGENT/my_agent/config/' \
-'ultimate_student_productivity_dataset_5000.csv'
+PATH_CSV='/home/rondi/dev/python_projects/PROJETO-4---SQL_AGENT/my_agent/config/ultimate_student_productivity_dataset_5000.csv'
 
 df = pd.read_csv(PATH_CSV)
 # df.info()

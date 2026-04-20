@@ -40,4 +40,4 @@ def chat_endpoint(data: PerguntaModel) -> RespostaModel:
         total_tokens=tokens_usados
     )
     
-# Iniciar o servidor com: uvicorn main:app --reload
+# Iniciar o servidor com: uvicorn main:app --reload --port 8081
