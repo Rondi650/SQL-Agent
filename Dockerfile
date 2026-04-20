@@ -20,4 +20,5 @@ RUN adduser --disabled-password rondi && \
 
 USER rondi
 
+# permissao chmod 755 ./scripts/entrypoint.sh
 CMD ["./scripts/entrypoint.sh"]

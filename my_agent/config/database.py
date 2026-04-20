@@ -6,7 +6,6 @@ import pandas as pd
 
 
 ROOT_DIR = Path(__file__).parent
-print(f"ROOT_DIR: {ROOT_DIR}")
 DB_NAME = 'db.sqlite3'
 DB_FILE = ROOT_DIR / DB_NAME
 TABLE_NAME = 'customers'
