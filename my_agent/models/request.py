@@ -3,6 +3,11 @@ from typing import Annotated, Optional
 
 class PerguntaModel(BaseModel):
     pergunta: Annotated[str, Field(min_length=1, max_length=200, examples=["Quanto é 2+2?"])]
+
+class ResumeModel(BaseModel):
+    thread_id: str
+    action: str = Field(..., pattern="^(approve|reject)$")
+    feedback: Optional[str] = Field(None, max_length=500)
     
 class QueryParams(BaseModel):
     """Parâmetros para filtros de queries"""

@@ -5,6 +5,15 @@ from my_agent.config.database import run_db
 
 sys.path.append("..")
 
+
+def _safe_run_db(query: str) -> str:
+    try:
+        resultado = run_db(query)
+        return str(resultado)
+    except Exception as e:
+        return f"[Erro SQL] {e}"
+
+
 @tool("aggregate_metric", description="Agrega uma métrica usando uma operação "
 "(AVG, SUM, MIN, MAX, COUNT) e opcionalmente agrupa por uma coluna.")
 def aggregate_metric(params: QueryParams):
@@ -22,8 +31,7 @@ def aggregate_metric(params: QueryParams):
             SELECT {params.operation}({params.column})
             FROM customers
         """
-    resultado = run_db(query)
-    return str(resultado)
+    return _safe_run_db(query)
 
 @tool("filter_data", description="Filtra dados com base em " \
 "critérios especificados.")
@@ -37,8 +45,7 @@ def filter_data(params: QueryParams):
     WHERE {params.column} {params.operator} {params.value}
     LIMIT {params.limit}
     """
-    resultado = run_db(query)
-    return str(resultado)
+    return _safe_run_db(query)
 
 @tool("top_students", description="Retorna os melhores estudantes " \
 "com base em uma métrica.")
@@ -49,8 +56,7 @@ def top_students(params: QueryParams):
     ORDER BY {params.column} DESC
     LIMIT {params.limit}
     """
-    resultado = run_db(query)
-    return str(resultado)
+    return _safe_run_db(query)
 
 @tool("get_table_schema", description="Retorna o schema (estrutura) da tabela " \
 "customers com informações sobre cada coluna e seu tipo de dado.")
