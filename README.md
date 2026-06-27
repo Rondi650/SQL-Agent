@@ -1,146 +1,148 @@
-# SQL Agent - Agente Inteligente de Análise de Dados
+# SQL Agent - Intelligent Data Analysis Agent
 
-Um agente inteligente baseado em IA (GPT + LangGraph) que transforma perguntas em linguagem natural em consultas SQL e análises de dados.
+An intelligent AI-based agent (GPT + LangGraph) that transforms natural language questions into SQL queries and data analysis.
 
-## Descrição
+Note: Model used as a laboratory for learning and applying concepts.
 
-O SQL Agent converte perguntas em português para consultas SQL ou ferramentas customizadas de análise, eliminando a necessidade de conhecimento técnico de SQL. Inclui dataset completo para testes imediatos sem configuração de banco de dados externo.
+## Description
 
-**Características principais:**
-- Compreensão de perguntas em linguagem natural
-- Roteamento automático para ferramentas apropriadas
-- Validação de consultas SQL antes da execução
-- Histórico persistente de conversas
-- Interface web moderna com Streamlit
-- Dataset pré-carregado para testes
+SQL Agent converts Portuguese questions into SQL queries or custom analysis tools, eliminating the need for technical SQL knowledge. Includes a complete dataset for immediate testing without external database configuration.
 
-## Pré-requisitos
+**Key Features:**
+- Natural language question comprehension
+- Automatic routing to appropriate tools
+- SQL query validation before execution
+- Persistent conversation history
+- Modern web interface with Streamlit
+- Pre-loaded dataset for testing
 
-- Python 3.10 ou superior
-- Chave de API OpenAI
-- (Opcional) SQL Server para produção
+## Prerequisites
 
-**Nota:** O projeto inclui um dataset SQLite pré-configurado para testes, não requer setup de banco de dados.
+- Python 3.10 or higher
+- OpenAI API Key
+- (Optional) SQL Server for production
 
-## Instalação
+**Note:** The project includes a pre-configured SQLite dataset for testing, no database setup required.
 
-### 1. Clone o repositório
+## Installation
+
+### 1. Clone the repository
 ```bash
 cd PROJETO-4---SQL_AGENT
 ```
 
-### 2. Configure o ambiente virtual
+### 2. Set up virtual environment
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
-# ou
+# or
 .venv\Scripts\activate  # Windows
 ```
 
-### 3. Instale as dependências
+### 3. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure a chave OpenAI
+### 4. Configure OpenAI key
 ```bash
-export OPENAI_API_KEY="sua-chave-aqui"  # Linux/Mac
-# ou
-set OPENAI_API_KEY=sua-chave-aqui  # Windows
+export OPENAI_API_KEY="your-key-here"  # Linux/Mac
+# or
+set OPENAI_API_KEY=your-key-here  # Windows
 ```
 
-## Execução
+## Execution
 
 ### Terminal 1 - API
 ```bash
 python main.py
 ```
-Disponível em `http://localhost:8000`
+Available at `http://localhost:8000`
 
-### Terminal 2 - Interface Web
+### Terminal 2 - Web Interface
 ```bash
 streamlit run streamlit_app.py
 ```
-Acesso em `http://localhost:8501`
+Access at `http://localhost:8501`
 
-O dataset pré-carregado contém dados de produtividade estudantil para testes imediatos.
+The pre-loaded dataset contains student productivity data for immediate testing.
 
-## Recursos
+## Features
 
-- Chat em tempo real com respostas inteligentes baseadas em IA
-- Exemplos de perguntas pré-formatadas por categoria
-- Histórico de mensagens persistente durante a sessão
-- Metadados (timestamp e ID de thread para cada resposta)
-- Avatares customizados para usuário e assistente
-- Documentação interativa (Swagger/ReDoc)
-- Dataset incluído para testes imediatos
+- Real-time chat with intelligent AI-based responses
+- Pre-formatted example questions by category
+- Persistent message history during the session
+- Metadata (timestamp and thread ID for each response)
+- Custom avatars for user and assistant
+- Interactive documentation (Swagger/ReDoc)
+- Included dataset for immediate testing
 
-## Exemplos de Consultas
+## Query Examples
 
 ```
-"Qual é a nota média de exame dos estudantes?"
-"Quais são os 10 melhores estudantes por nota?"
-"Qual é a média de horas de estudo?"
-"Qual é o score médio de saúde mental?"
-"Qual a nota média por nível acadêmico?"
+"What is the average exam score of students?"
+"Who are the top 10 students by score?"
+"What is the average study hours?"
+"What is the average mental health score?"
+"What is the average score by academic level?"
 ```
 
-## Estrutura do Projeto
+## Project Structure
 
 ```
 PROJETO-4---SQL_AGENT/
-├── main.py                    # Servidor API FastAPI
-├── streamlit_app.py           # Interface web Streamlit
-├── requirements.txt           # Dependências do projeto
+├── main.py                    # FastAPI Server
+├── streamlit_app.py           # Streamlit Web Interface
+├── requirements.txt           # Project dependencies
 │
 ├── my_agent/
-│   ├── agent.py              # Orquestração do agente
+│   ├── agent.py              # Agent orchestration
 │   ├── config/               
-│   │   ├── database.py       # Configuração de conexão
-│   │   ├── settings.py       # Configurações LLM
-│   │   ├── prompts.py        # Instruções de sistema
-│   │   └── db.sqlite3        # Dataset para testes
+│   │   ├── database.py       # Connection configuration
+│   │   ├── settings.py       # LLM settings
+│   │   ├── prompts.py        # System instructions
+│   │   └── db.sqlite3        # Test dataset
 │   ├── models/               
-│   │   ├── request.py        # Modelos de entrada
-│   │   └── response.py       # Modelos de saída
+│   │   ├── request.py        # Input models
+│   │   └── response.py       # Output models
 │   └── utils/                
-│       ├── tools.py          # Ferramentas disponíveis
-│       ├── nodes.py          # Nós do workflow
-│       ├── helpers.py        # Funções auxiliares
-│       └── images/           # Avatares do chat
+│       ├── tools.py          # Available tools
+│       ├── nodes.py          # Workflow nodes
+│       ├── helpers.py        # Helper functions
+│       └── images/           # Chat avatars
 ```
 
-## Configuração
+## Configuration
 
-A barra lateral da aplicação permite:
-- Modificar URL da API remotamente
-- Visualizar ID da conversa atual
-- Acessar exemplos de perguntas por categoria
-- Consultar documentação da API (Swagger/ReDoc)
+The application sidebar allows:
+- Modify remote API URL
+- View current conversation ID
+- Access example questions by category
+- Consult API documentation (Swagger/ReDoc)
 
 ## Troubleshooting
 
-| Problema | Solução |
-|----------|---------|
-| Erro ao conectar na API | Verifique se `main.py` está rodando em `http://localhost:8000` |
-| Requisição expirada | Simplifique a pergunta; consultas complexas demoram mais tempo |
-| Avatares não aparecem | Confirme que as imagens estão em `my_agent/utils/images/` |
-| Chat vazio após refresh | Use o botão "Limpar Chat" para resetar a sessão |
-| Erro de chave OpenAI | Configure `OPENAI_API_KEY` nas variáveis de ambiente |
+| Problem | Solution |
+|---------|----------|
+| Error connecting to API | Check if `main.py` is running at `http://localhost:8000` |
+| Request timed out | Simplify the question; complex queries take more time |
+| Avatars not showing | Confirm images are in `my_agent/utils/images/` |
+| Empty chat after refresh | Use the "Clear Chat" button to reset the session |
+| OpenAI key error | Configure `OPENAI_API_KEY` in environment variables |
 
-## Documentação da API
+## API Documentation
 
-Após iniciar o servidor, acesse:
+After starting the server, access:
 - **Swagger UI:** `http://localhost:8000/docs`
 - **ReDoc:** `http://localhost:8000/redoc`
 
-## Desenvolvimento
+## Development
 
-Para adicionar novas ferramentas:
-1. Defina a ferramenta em `my_agent/utils/tools.py`
-2. Registre no agente em `my_agent/agent.py`
-3. Atualize os prompts em `my_agent/config/prompts.py`
+To add new tools:
+1. Define the tool in `my_agent/utils/tools.py`
+2. Register in the agent at `my_agent/agent.py`
+3. Update prompts in `my_agent/config/prompts.py`
 
-## Licença
+## License
 
-Projeto educacional para análise de dados inteligente.
+Educational project for intelligent data analysis.
