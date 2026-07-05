@@ -7,7 +7,7 @@ from PIL import Image
 import os
 
 st.set_page_config(
-    page_title=" Rondi`s SQL Agent Chat",
+    page_title="SQL Agent Chat",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -52,7 +52,7 @@ if os.path.exists("my_agent/utils/images/avatar_ia.png"):
     except Exception as e:
         st.warning(f"Nao foi possivel carregar avatar_ia.png: {e}")
 
-st.title("SQL Agent Chat")
+st.title("Rondi`s - SQL Agent Chat")
 st.markdown(
     "Faca perguntas sobre seus dados e o agente ira responder usando SQL ou ferramentas calculadas."
 )
