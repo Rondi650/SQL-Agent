@@ -7,7 +7,7 @@ from PIL import Image
 import os
 
 st.set_page_config(
-    page_title="SQL Agent Chat",
+    page_title=" Rondi`s SQL Agent Chat",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -150,7 +150,8 @@ def call_api(endpoint: str, payload: dict) -> dict | None:
             st.error(f"Erro da API (Status {resp.status_code})")
             return None
     except requests.exceptions.ConnectionError:
-        st.error("Erro: Nao foi possivel conectar a API. Verifique se a aplicacao esta rodando em http://localhost:8081")
+        st.error(
+            "Erro: Nao foi possivel conectar a API. Verifique se a aplicacao esta rodando em http://localhost:8081")
         return None
     except requests.exceptions.Timeout:
         st.error("Erro: Requisicao expirou. Tente novamente.")
@@ -239,7 +240,8 @@ if user_input:
                 "agent_explanation": result.get("agent_explanation", ""),
             }
         else:
-            handle_final_response(result, result.get("thread_id", "desconhecido"))
+            handle_final_response(result, result.get(
+                "thread_id", "desconhecido"))
     st.rerun()
 
 if st.session_state.pending_approval:
@@ -254,7 +256,8 @@ if st.session_state.pending_approval:
 
     st.markdown("**Ferramenta(s) que serao executadas:**")
     for tc in info.get("tool_calls", []):
-        st.code(f"{tc['name']}({json.dumps(tc['args'], ensure_ascii=False)})", language="python")
+        st.code(
+            f"{tc['name']}({json.dumps(tc['args'], ensure_ascii=False)})", language="python")
 
     col1, col2 = st.columns([1, 3])
     with col1:
@@ -269,7 +272,8 @@ if st.session_state.pending_approval:
 
     with col2:
         if st.button("Rejeitar", use_container_width=True):
-            process_approval_decision(info["thread_id"], "reject", feedback_text)
+            process_approval_decision(
+                info["thread_id"], "reject", feedback_text)
 
 if st.session_state.messages:
     col1, col2 = st.columns([1, 4])

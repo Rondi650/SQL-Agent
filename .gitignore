@@ -180,3 +180,5 @@ uv.lock
 .langgraph_api
 .langgraph_api/
 /.langgraph_api
+
+docker-compose.yml
