@@ -182,3 +182,4 @@ uv.lock
 /.langgraph_api
 
 docker-compose.yml
+Dockerfile
